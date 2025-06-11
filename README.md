@@ -34,3 +34,4 @@ Clone the repository:
 
 git clone https://github.com/your-username/crypto-forecasting-volatility.git
 cd crypto-forecasting-volatility
+pip install -r requirements.txt
