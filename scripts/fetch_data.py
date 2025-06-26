@@ -22,9 +22,11 @@ def resample_and_save(df, base_filename):
     df = df.set_index('timestamp')
     # Hourly resample
     hourly = df.resample('H').mean().reset_index()
+    hourly = hourly.dropna()
     save_csv(hourly, f'{base_filename}_hourly.csv')
     # Daily resample
     daily = df.resample('D').mean().reset_index()
+    daily = daily.dropna()
     save_csv(daily, f'{base_filename}_daily.csv')
 
 # Fetch and save BTC and ETH data
