@@ -1,1 +1,7 @@
 kagglehub[pandas-datasets]
+tensorflow
+keras
+pandas
+numpy
+scikit-learn
+matplotlib

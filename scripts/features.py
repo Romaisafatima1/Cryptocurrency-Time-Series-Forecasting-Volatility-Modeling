@@ -20,6 +20,14 @@ def add_derived_features(df):
     # Ensure the data is sorted by date
     df_features = df_features.sort_values('timestamp')
     
+    # If 'close' not in columns but 'price' is, map 'price' to 'close'
+    if 'close' not in df_features.columns and 'price' in df_features.columns:
+        df_features['close'] = df_features['price']
+    # Fill missing OHLCV columns with 'close' or NaN
+    for col in ['open', 'high', 'low', 'volume']:
+        if col not in df_features.columns:
+            df_features[col] = df_features['close'] if col != 'volume' else np.nan
+    
     # 1. RETURNS CALCULATION
     # Simple returns (percentage change)
     df_features['daily_return'] = df_features['close'].pct_change()
@@ -40,6 +48,8 @@ def add_derived_features(df):
     # Long-term moving averages
     df_features['ma_50'] = df_features['close'].rolling(window=50).mean()
     df_features['ma_200'] = df_features['close'].rolling(window=200).mean()
+    # Add missing ma_20 for Bollinger Bands
+    df_features['ma_20'] = df_features['close'].rolling(window=20).mean()
     
     # Exponential moving averages (gives more weight to recent prices)
     df_features['ema_12'] = df_features['close'].ewm(span=12).mean()
