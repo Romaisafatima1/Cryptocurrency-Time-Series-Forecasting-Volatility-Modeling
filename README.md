@@ -11,6 +11,8 @@ Volatility Modeling: Implements GARCH and EGARCH to analyze market volatility.
 
 Model Comparison: Evaluates models using metrics like RMSE, MAE, and MAPE.
 
+Automated Model Comparison Dashboard: Interactive dashboard for comparing all models with performance metrics and visualizations.
+
 Interactive Dashboard: Visualizes forecasts and volatility with dynamic charts.
 
 Flask API: Provides endpoints to access model predictions programmatically.
@@ -35,3 +37,26 @@ Clone the repository:
 git clone https://github.com/your-username/crypto-forecasting-volatility.git
 cd crypto-forecasting-volatility
 pip install -r requirements.txt
+
+#Usage
+
+## Running the Main Analysis
+```bash
+python src/main.py
+```
+
+## Running the Automated Dashboard
+```bash
+python src/integrated_dashboard.py
+```
+
+## Testing the Dashboard
+```bash
+python test_dashboard.py
+```
+
+## Dashboard Features
+- **Performance Comparison**: Compare RMSE, MAPE, and MAE across all models
+- **Model Ranking**: Automated ranking system to identify best performing models
+- **Forecast Visualization**: Side-by-side comparison of price and volatility forecasts
+- **Summary Reports**: Comprehensive performance summaries with recommendations
