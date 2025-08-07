@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 btc_df = pd.read_csv('data/raw/btc_data.csv', parse_dates=['timestamp'], index_col='timestamp')
 eth_df = pd.read_csv('data/raw/eth_data.csv', parse_dates=['timestamp'], index_col='timestamp')
 
-# Helper: Forecast price with Auto-ARIMA (improved version)
+# Helper: Forecast price with Auto-ARIMA (enhanced with BIC)
 def forecast_auto_arima(series, steps=7, test_size=0.2):
     """
     Forecast prices using Auto-ARIMA with proper train/test split
@@ -49,11 +49,13 @@ def forecast_auto_arima(series, steps=7, test_size=0.2):
     mae = mean_absolute_error(test_data, test_forecast)
     rmse = np.sqrt(mse)
     mape = np.mean(np.abs((test_data - test_forecast) / test_data)) * 100
+    bic = model_fit.bic
     
     print(f"Model Evaluation on Test Data:")
     print(f"  RMSE: {rmse:.4f}")
     print(f"  MAE: {mae:.4f}")
     print(f"  MAPE: {mape:.2f}%")
+    print(f"  BIC: {bic:.4f}")
     
     # Generate future forecast
     future_forecast = model_fit.forecast(steps=steps)
@@ -64,7 +66,7 @@ def forecast_auto_arima(series, steps=7, test_size=0.2):
         'order': auto_model.order,
         'forecast': future_forecast,
         'confidence_interval': future_ci,
-        'metrics': {'rmse': rmse, 'mae': mae, 'mape': mape},
+        'metrics': {'rmse': rmse, 'mae': mae, 'mape': mape, 'bic': bic},
         'test_data': test_data,
         'test_forecast': test_forecast
     }
@@ -157,6 +159,148 @@ def forecast_garch_models(series, steps=7, test_size=0.2):
     
     return results, log_returns_clean
 
+# NEW FUNCTION: Plot Actual vs Predicted for ARIMA Models
+def plot_actual_vs_predicted(test_data, predicted_data, coin_name, model_name):
+    """
+    Plot actual vs predicted values for model evaluation
+    """
+    plt.figure(figsize=(12, 6))
+    
+    # Main plot
+    plt.plot(test_data.index, test_data.values, label='Actual', marker='o', linewidth=2, color='blue')
+    plt.plot(test_data.index, predicted_data, label=f'{model_name} Predicted', marker='x', linewidth=2, color='red')
+    
+    # Calculate residuals and add them as shaded area
+    residuals = test_data.values - predicted_data
+    plt.fill_between(test_data.index, test_data.values, predicted_data, alpha=0.3, color='gray', label='Residuals')
+    
+    plt.title(f'{coin_name} - {model_name}: Actual vs Predicted Prices', fontsize=14, fontweight='bold')
+    plt.xlabel('Date', fontsize=12)
+    plt.ylabel('Price ($)', fontsize=12)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    
+    # Add performance metrics as text box
+    mse = mean_squared_error(test_data.values, predicted_data)
+    mae = mean_absolute_error(test_data.values, predicted_data)
+    rmse = np.sqrt(mse)
+    mape = np.mean(np.abs((test_data.values - predicted_data) / test_data.values)) * 100
+    
+    textstr = f'RMSE: ${rmse:.2f}\nMAE: ${mae:.2f}\nMAPE: {mape:.2f}%'
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+    plt.text(0.02, 0.98, textstr, transform=plt.gca().transAxes, fontsize=10,
+             verticalalignment='top', bbox=props)
+    
+    plt.show()
+
+# NEW FUNCTION: Build Comprehensive Comparison Table
+def build_comparison_table(btc_price_results, eth_price_results, btc_vol_results, eth_vol_results):
+    """
+    Build a comprehensive table comparing all models for both coins
+    """
+    print("\n" + "="*80)
+    print("COMPREHENSIVE MODEL COMPARISON TABLE")
+    print("="*80)
+    
+    # Prepare data for the comparison table
+    comparison_data = []
+    
+    # BTC ARIMA
+    comparison_data.append({
+        'Coin': 'BTC',
+        'Model': 'ARIMA',
+        'RMSE': f"{btc_price_results['metrics']['rmse']:.4f}",
+        'MAE': f"{btc_price_results['metrics']['mae']:.4f}",
+        'MAPE (%)': f"{btc_price_results['metrics']['mape']:.2f}",
+        'BIC': f"{btc_price_results['metrics']['bic']:.2f}",
+        'Parameters': str(btc_price_results['order'])
+    })
+    
+    # ETH ARIMA
+    comparison_data.append({
+        'Coin': 'ETH',
+        'Model': 'ARIMA',
+        'RMSE': f"{eth_price_results['metrics']['rmse']:.4f}",
+        'MAE': f"{eth_price_results['metrics']['mae']:.4f}",
+        'MAPE (%)': f"{eth_price_results['metrics']['mape']:.2f}",
+        'BIC': f"{eth_price_results['metrics']['bic']:.2f}",
+        'Parameters': str(eth_price_results['order'])
+    })
+    
+    # BTC GARCH
+    comparison_data.append({
+        'Coin': 'BTC',
+        'Model': 'GARCH',
+        'RMSE': f"{btc_vol_results['GARCH']['rmse']:.4f}" if not np.isnan(btc_vol_results['GARCH']['rmse']) else 'N/A',
+        'MAE': f"{btc_vol_results['GARCH']['mae']:.4f}" if not np.isnan(btc_vol_results['GARCH']['mae']) else 'N/A',
+        'MAPE (%)': 'N/A',
+        'BIC': f"{btc_vol_results['GARCH']['bic']:.2f}",
+        'Parameters': 'p=1, q=1'
+    })
+    
+    # BTC EGARCH
+    comparison_data.append({
+        'Coin': 'BTC',
+        'Model': 'EGARCH',
+        'RMSE': f"{btc_vol_results['EGARCH']['rmse']:.4f}" if not np.isnan(btc_vol_results['EGARCH']['rmse']) else 'N/A',
+        'MAE': f"{btc_vol_results['EGARCH']['mae']:.4f}" if not np.isnan(btc_vol_results['EGARCH']['mae']) else 'N/A',
+        'MAPE (%)': 'N/A',
+        'BIC': f"{btc_vol_results['EGARCH']['bic']:.2f}",
+        'Parameters': 'p=1, q=1'
+    })
+    
+    # ETH GARCH
+    comparison_data.append({
+        'Coin': 'ETH',
+        'Model': 'GARCH',
+        'RMSE': f"{eth_vol_results['GARCH']['rmse']:.4f}" if not np.isnan(eth_vol_results['GARCH']['rmse']) else 'N/A',
+        'MAE': f"{eth_vol_results['GARCH']['mae']:.4f}" if not np.isnan(eth_vol_results['GARCH']['mae']) else 'N/A',
+        'MAPE (%)': 'N/A',
+        'BIC': f"{eth_vol_results['GARCH']['bic']:.2f}",
+        'Parameters': 'p=1, q=1'
+    })
+    
+    # ETH EGARCH
+    comparison_data.append({
+        'Coin': 'ETH',
+        'Model': 'EGARCH',
+        'RMSE': f"{eth_vol_results['EGARCH']['rmse']:.4f}" if not np.isnan(eth_vol_results['EGARCH']['rmse']) else 'N/A',
+        'MAE': f"{eth_vol_results['EGARCH']['mae']:.4f}" if not np.isnan(eth_vol_results['EGARCH']['mae']) else 'N/A',
+        'MAPE (%)': 'N/A',
+        'BIC': f"{eth_vol_results['EGARCH']['bic']:.2f}",
+        'Parameters': 'p=1, q=1'
+    })
+    
+    # Create and display the comparison DataFrame
+    comparison_df = pd.DataFrame(comparison_data)
+    
+    print(comparison_df.to_string(index=False))
+    
+    # Save to CSV for future reference
+    comparison_df.to_csv('data/processed/model_comparison_table.csv', index=False)
+    print(f"\nComparison table saved to: data/processed/model_comparison_table.csv")
+    
+    # Best Model Analysis
+    print("\n" + "="*60)
+    print("BEST MODEL ANALYSIS")
+    print("="*60)
+    
+    # Best ARIMA model (lowest BIC)
+    arima_models = comparison_df[comparison_df['Model'] == 'ARIMA'].copy()
+    arima_models['BIC_float'] = pd.to_numeric(arima_models['BIC'])
+    best_arima = arima_models.loc[arima_models['BIC_float'].idxmin()]
+    print(f"Best ARIMA Model: {best_arima['Coin']} (BIC: {best_arima['BIC']})")
+    
+    # Best volatility models
+    for coin in ['BTC', 'ETH']:
+        coin_vol = comparison_df[(comparison_df['Coin'] == coin) & (comparison_df['Model'].isin(['GARCH', 'EGARCH']))].copy()
+        coin_vol['BIC_float'] = pd.to_numeric(coin_vol['BIC'])
+        best_vol = coin_vol.loc[coin_vol['BIC_float'].idxmin()]
+        print(f"Best Volatility Model for {coin}: {best_vol['Model']} (BIC: {best_vol['BIC']})")
+    
+    return comparison_df
+
 def plot_forecasts(price_results, vol_results, crypto_name):
     """
     Plot price and volatility forecasts
@@ -242,6 +386,9 @@ print(f'\nVolatility Forecast (next 7 days):')
 print(f'  GARCH:  {btc_vol_results["GARCH"]["forecast"]}')
 print(f'  EGARCH: {btc_vol_results["EGARCH"]["forecast"]}')
 
+# PLOT ACTUAL vs PREDICTED for BTC
+plot_actual_vs_predicted(btc_price_results['test_data'], btc_price_results['test_forecast'], 'Bitcoin (BTC)', 'ARIMA')
+
 # Plot BTC results
 plot_forecasts(btc_price_results, btc_vol_results, 'Bitcoin (BTC)')
 
@@ -265,10 +412,16 @@ print(f'\nVolatility Forecast (next 7 days):')
 print(f'  GARCH:  {eth_vol_results["GARCH"]["forecast"]}')
 print(f'  EGARCH: {eth_vol_results["EGARCH"]["forecast"]}')
 
+# PLOT ACTUAL vs PREDICTED for ETH
+plot_actual_vs_predicted(eth_price_results['test_data'], eth_price_results['test_forecast'], 'Ethereum (ETH)', 'ARIMA')
+
 # Plot ETH results
 plot_forecasts(eth_price_results, eth_vol_results, 'Ethereum (ETH)')
 
-# Overall comparison
+# BUILD COMPREHENSIVE COMPARISON TABLE
+comparison_table = build_comparison_table(btc_price_results, eth_price_results, btc_vol_results, eth_vol_results)
+
+# Overall comparison (keeping original summary)
 print("\n" + "="*50)
 print("OVERALL MODEL PERFORMANCE SUMMARY")
 print("="*50)
@@ -289,9 +442,8 @@ print(comparison_df.to_string(index=False))
 
 print("\n" + "="*50)
 print("ANALYSIS COMPLETE!")
-print("Week 4 Objectives Achieved:")
-print("✅ Auto-ARIMA models trained")
-print("✅ GARCH models trained") 
-print("✅ EGARCH models trained")
-print("✅ Model evaluation and comparison completed")
+print("- All models evaluated using MAE, RMSE, and BIC")
+print("- Actual vs predicted plots generated")
+print("- Comprehensive comparison table built")
+print("- Model evaluation and comparison completed")
 print("="*50)
