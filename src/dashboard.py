@@ -6,6 +6,16 @@ from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
+# Dash imports for interactive dashboard
+from dash import Dash, dcc, html, Input, Output, callback
+from interpretability import (
+    forecast_with_band_figure, residual_timeseries_figure,
+    residual_hist_figure, residual_acf_figure,
+    compute_residuals, empirical_error_quantiles, apply_empirical_pi,
+    normal_pi_from_residuals
+)
+from utils_io import build_forecast_df
+
 class ModelComparisonDashboard:
     """
     Automated Model Comparison Dashboard for Cryptocurrency Forecasting
@@ -240,8 +250,87 @@ def integrate_with_existing_models():
     
     return dashboard
 
+
+
+# Dash Interactive Dashboard Components
+def create_interactive_dashboard():
+    """
+    Create an interactive Dash app for forecast and diagnostics
+    """
+    app = Dash(__name__)
+    
+    # Define the layout
+    app.layout = html.Div([
+        html.H3("Forecast & Diagnostics"),
+        html.Div([
+            html.Label("Confidence Level"),
+            dcc.Slider(id="alpha-slider", min=0.80, max=0.99, step=0.01, value=0.95,
+                       marks={x: f"{int(x*100)}%" for x in [0.80,0.90,0.95,0.99]}),
+            html.Label("Band Method"),
+            dcc.RadioItems(
+                id="band-method",
+                options=[{"label":"Empirical","value":"emp"},{"label":"Normal","value":"normal"}],
+                value="emp", inline=True
+            ),
+        ], style={"marginBottom":"1rem"}),
+
+        dcc.Tabs(id="tabs", value="tab-forecast", children=[
+            dcc.Tab(label="Forecast", value="tab-forecast", children=[ dcc.Graph(id="forecast-graph") ]),
+            dcc.Tab(label="Residuals", value="tab-resid", children=[
+                dcc.Graph(id="resid-ts"),
+                dcc.Graph(id="resid-hist"),
+                dcc.Graph(id="resid-acf"),
+            ])
+        ])
+    ])
+
+    @callback(
+        Output("forecast-graph","figure"),
+        Output("resid-ts","figure"),
+        Output("resid-hist","figure"),
+        Output("resid-acf","figure"),
+        Input("alpha-slider","value"),
+        Input("band-method","value"),
+    )
+    def update_graphs(conf_level, band_method):
+        alpha = 1.0 - conf_level
+
+        # TODO: replace with your real artifacts
+        timestamps = pd.date_range("2025-01-01", periods=200, freq="D")
+        y_true = pd.Series(1000 + pd.Series(range(200)).rolling(7, min_periods=1).mean().values)
+        y_pred = y_true.shift(1).fillna(y_true.iloc[0])  # placeholder prediction
+
+        residuals = compute_residuals(y_true, y_pred)
+
+        if band_method == "emp":
+            ql, qh = empirical_error_quantiles(residuals, alpha=alpha)
+            lower, upper = apply_empirical_pi(y_pred, ql, qh)
+        else:
+            lower, upper = normal_pi_from_residuals(y_pred, residuals, alpha=alpha)
+
+        dfp = build_forecast_df(timestamps, y_true, y_pred, lower, upper)
+        f1 = forecast_with_band_figure(dfp, "ds","y","yhat","yhat_lower","yhat_upper",
+                                       title=f"Forecast with {int(conf_level*100)}% Band")
+        r1 = residual_timeseries_figure(residuals, time_index=timestamps)
+        r2 = residual_hist_figure(residuals)
+        r3 = residual_acf_figure(residuals, nlags=40)
+        return f1, r1, r2, r3
+    
+    return app
+
+# Function to run the interactive dashboard
+def run_interactive_dashboard(host='127.0.0.1', port=8050, debug=True):
+    """
+    Run the interactive Dash dashboard
+    """
+    app = create_interactive_dashboard()
+    print(f"🚀 Starting Interactive Dashboard at http://{host}:{port}")
+    app.run_server(host=host, port=port, debug=debug)
+
+# Example usage section
 if __name__ == "__main__":
-    # Create and demonstrate the dashboard
+    # Existing matplotlib dashboard demonstration
+    print("🎯 Running Matplotlib Dashboard Demo...")
     dashboard = ModelComparisonDashboard()
     
     # Add sample data for demonstration
@@ -261,4 +350,16 @@ if __name__ == "__main__":
     # Generate dashboard
     metrics_df = dashboard.generate_performance_comparison()
     dashboard.generate_forecast_comparison()
-    dashboard.generate_summary_report() 
+    dashboard.generate_summary_report()
+    
+    # Interactive dashboard option
+    print("\n" + "="*60)
+    print("🚀 INTERACTIVE DASHBOARD AVAILABLE!")
+    print("="*60)
+    print("To run the interactive Dash dashboard, use:")
+    print(">>> from dashboard import run_interactive_dashboard")
+    print(">>> run_interactive_dashboard()")
+    print("\nOr run directly:")
+    print(">>> python -c \"from src.dashboard import run_interactive_dashboard; run_interactive_dashboard()\"")
+    print(f"\nThis will start the dashboard at: http://127.0.0.1:8050")
+    print("="*60) 
