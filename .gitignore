@@ -1,0 +1,8 @@
+
+# macOS junk
+.DS_Store
+**/.DS_Store
+
+# Spark output
+/data/processed/btc_spark_output.csv/
+
