@@ -8,13 +8,13 @@ warnings.filterwarnings('ignore')
 
 # Dash imports for interactive dashboard
 from dash import Dash, dcc, html, Input, Output, callback
-from interpretability import (
+from .interpretability import (
     forecast_with_band_figure, residual_timeseries_figure,
     residual_hist_figure, residual_acf_figure,
     compute_residuals, empirical_error_quantiles, apply_empirical_pi,
     normal_pi_from_residuals
 )
-from utils_io import build_forecast_df
+from .utils_io import build_forecast_df
 
 class ModelComparisonDashboard:
     """
@@ -325,7 +325,7 @@ def run_interactive_dashboard(host='127.0.0.1', port=8050, debug=True):
     """
     app = create_interactive_dashboard()
     print(f"🚀 Starting Interactive Dashboard at http://{host}:{port}")
-    app.run_server(host=host, port=port, debug=debug)
+    app.run(host=host, port=port, debug=debug)
 
 # Example usage section
 if __name__ == "__main__":
