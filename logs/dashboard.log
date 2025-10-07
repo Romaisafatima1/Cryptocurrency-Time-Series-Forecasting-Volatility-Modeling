@@ -1,0 +1,26 @@
+======================================================================
+🔮 CRYPTOCURRENCY FORECASTING DASHBOARD
+======================================================================
+
+🌐 Dashboard URL: http://localhost:8050
+📊 Features:
+   • Real-time forecasting with ARIMA, LSTM, GARCH, EGARCH
+   • Interactive visualizations with confidence intervals
+   • Comprehensive model performance metrics
+   • Residual diagnostics and volatility analysis
+   • Model comparison and ranking
+
+⚠️  Make sure the API is running at http://localhost:8000
+   Start API with: python run_api.py
+
+======================================================================
+
+Traceback (most recent call last):
+  File "/Users/romaisa/Desktop/crypto/Cryptocurrency-Time-Series-Forecasting-Volatility-Modeling/interactive_dashboard.py", line 838, in <module>
+    run_dashboard(debug=True, port=8050)
+  File "/Users/romaisa/Desktop/crypto/Cryptocurrency-Time-Series-Forecasting-Volatility-Modeling/interactive_dashboard.py", line 835, in run_dashboard
+    app.run_server(debug=debug, port=port, host='0.0.0.0')
+    ^^^^^^^^^^^^^^
+  File "/Users/romaisa/Desktop/crypto/Cryptocurrency-Time-Series-Forecasting-Volatility-Modeling/venv/lib/python3.11/site-packages/dash/_obsolete.py", line 22, in __getattr__
+    raise err.exc(err.message)
+dash.exceptions.ObsoleteAttributeException: app.run_server has been replaced by app.run

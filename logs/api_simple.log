@@ -1,0 +1,18 @@
+INFO:     Will watch for changes in these directories: ['/Users/romaisa/Desktop/crypto/Cryptocurrency-Time-Series-Forecasting-Volatility-Modeling']
+ERROR:    [Errno 48] Address already in use
+🚀 Starting Simplified Cryptocurrency Forecasting API...
+📊 Available endpoints:
+  - GET  / : API information
+  - GET  /health : Health check
+  - POST /forecast : Get forecasts
+  - GET  /metrics/{crypto} : Get model metrics
+  - GET  /historical/{crypto} : Get historical analysis
+  - GET  /compare : Compare models
+  - GET  /cache/status : Cache status
+  - DELETE /cache/clear : Clear cache
+
+🌐 API will be available at: http://localhost:8000
+📖 API documentation at: http://localhost:8000/docs
+🔧 Interactive docs at: http://localhost:8000/redoc
+
+============================================================

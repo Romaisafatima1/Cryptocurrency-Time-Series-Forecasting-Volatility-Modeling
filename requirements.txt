@@ -1,0 +1,17 @@
+kagglehub[pandas-datasets]
+tensorflow
+keras
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+statsmodels
+arch
+pmdarima
+fastapi
+uvicorn
+python-multipart
+pydantic
+dash
+plotly
