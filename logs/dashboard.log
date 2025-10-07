@@ -1,0 +1,23 @@
+======================================================================
+🔮 CRYPTOCURRENCY FORECASTING DASHBOARD
+======================================================================
+
+🌐 Dashboard URL: http://localhost:8050
+📊 Features:
+   • Real-time forecasting with ARIMA, LSTM, GARCH, EGARCH
+   • Interactive visualizations with confidence intervals
+   • Comprehensive model performance metrics
+   • Residual diagnostics and volatility analysis
+   • Model comparison and ranking
+
+⚠️  Make sure the API is running at http://localhost:8000
+   Start API with: python run_api.py
+
+======================================================================
+
+Dash is running on http://0.0.0.0:8050/
+
+ * Serving Flask app 'interactive_dashboard'
+ * Debug mode: on
+/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
