@@ -15,12 +15,9 @@
 
 ======================================================================
 
-Traceback (most recent call last):
-  File "/Users/romaisa/Desktop/crypto/Cryptocurrency-Time-Series-Forecasting-Volatility-Modeling/interactive_dashboard.py", line 838, in <module>
-    run_dashboard(debug=True, port=8050)
-  File "/Users/romaisa/Desktop/crypto/Cryptocurrency-Time-Series-Forecasting-Volatility-Modeling/interactive_dashboard.py", line 835, in run_dashboard
-    app.run_server(debug=debug, port=port, host='0.0.0.0')
-    ^^^^^^^^^^^^^^
-  File "/Users/romaisa/Desktop/crypto/Cryptocurrency-Time-Series-Forecasting-Volatility-Modeling/venv/lib/python3.11/site-packages/dash/_obsolete.py", line 22, in __getattr__
-    raise err.exc(err.message)
-dash.exceptions.ObsoleteAttributeException: app.run_server has been replaced by app.run
+Dash is running on http://0.0.0.0:8050/
+
+ * Serving Flask app 'interactive_dashboard'
+ * Debug mode: on
+/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

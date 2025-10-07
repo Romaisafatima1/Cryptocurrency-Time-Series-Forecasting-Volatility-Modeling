@@ -832,7 +832,7 @@ def run_dashboard(debug=True, port=8050):
     print("   Start API with: python run_api.py")
     print("\n" + "="*70 + "\n")
     
-    app.run_server(debug=debug, port=port, host='0.0.0.0')
+    app.run(debug=debug, port=port, host='0.0.0.0')
 
 if __name__ == '__main__':
     run_dashboard(debug=True, port=8050)

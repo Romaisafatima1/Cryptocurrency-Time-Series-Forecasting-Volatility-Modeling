@@ -1,6 +1,6 @@
 INFO:     Will watch for changes in these directories: ['/Users/romaisa/Desktop/crypto/Cryptocurrency-Time-Series-Forecasting-Volatility-Modeling']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [9846] using StatReload
+INFO:     Started reloader process [25019] using StatReload
 🚀 Starting Cryptocurrency Forecasting API...
 📊 Available endpoints:
   - GET  / : API information
@@ -72,4 +72,4 @@ Traceback (most recent call last):
     from ._array import C_intgrt_vec
   File "pmdarima/utils/_array.pyx", line 1, in init pmdarima.utils._array
 ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
-INFO:     Stopping reloader process [9846]
+INFO:     Stopping reloader process [25019]
