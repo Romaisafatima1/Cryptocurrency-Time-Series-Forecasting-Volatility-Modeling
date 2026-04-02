@@ -212,63 +212,65 @@ def generate_garch_forecast(df, forecast_days, test_size, model_type="GARCH"):
         return None
 
 def generate_lstm_forecast(df, forecast_days, test_size):
-    """Generate LSTM price forecast"""
+    """Generate LSTM-style price forecast using a deep MLP with sliding-window sequences.
+    Uses sklearn MLPRegressor as a TensorFlow-free neural network backend.
+    """
     try:
         from sklearn.preprocessing import MinMaxScaler
-        import tensorflow as tf
-        from tensorflow import keras
-        
+        from sklearn.neural_network import MLPRegressor
+
         prices = df['price'].values.reshape(-1, 1)
         scaler = MinMaxScaler()
-        scaled_prices = scaler.fit_transform(prices)
-        
-        # Create sequences
+        scaled_prices = scaler.fit_transform(prices).flatten()
+
+        # Build sliding-window sequences (same lookback as original LSTM)
         lookback = 30
         X, y = [], []
         for i in range(len(scaled_prices) - lookback):
-            X.append(scaled_prices[i:i+lookback])
-            y.append(scaled_prices[i+lookback])
-        
+            X.append(scaled_prices[i:i + lookback])
+            y.append(scaled_prices[i + lookback])
+
         X, y = np.array(X), np.array(y)
         split_idx = int(len(X) * (1 - test_size))
         X_train, X_test = X[:split_idx], X[split_idx:]
         y_train, y_test = y[:split_idx], y[split_idx:]
-        
-        # Build and train model
-        model = keras.Sequential([
-            keras.layers.LSTM(50, return_sequences=True, input_shape=(lookback, 1)),
-            keras.layers.Dropout(0.2),
-            keras.layers.LSTM(50),
-            keras.layers.Dropout(0.2),
-            keras.layers.Dense(1)
-        ])
-        
-        model.compile(optimizer='adam', loss='mse')
-        model.fit(X_train, y_train, epochs=20, batch_size=16, verbose=0, validation_split=0.1)
-        
-        # Generate forecast
-        last_sequence = scaled_prices[-lookback:]
-        forecast = []
-        current_sequence = last_sequence.copy()
-        
+
+        # Two-hidden-layer MLP mirrors the depth of the original LSTM stack
+        model = MLPRegressor(
+            hidden_layer_sizes=(100, 50),
+            activation='relu',
+            solver='adam',
+            max_iter=300,
+            random_state=42,
+            early_stopping=True,
+            validation_fraction=0.1,
+            n_iter_no_change=20,
+        )
+        model.fit(X_train, y_train)
+
+        # Autoregressive multi-step forecast
+        current_sequence = scaled_prices[-lookback:].copy()
+        forecast_scaled = []
         for _ in range(forecast_days):
-            pred = model.predict(current_sequence.reshape(1, lookback, 1), verbose=0)
-            forecast.append(pred[0, 0])
-            current_sequence = np.vstack([current_sequence[1:], pred])
-        
-        forecast = scaler.inverse_transform(np.array(forecast).reshape(-1, 1)).flatten()
-        
-        # Calculate metrics
-        test_pred = model.predict(X_test, verbose=0)
-        test_pred_inv = scaler.inverse_transform(test_pred)
-        y_test_inv = scaler.inverse_transform(y_test)
-        metrics = calculate_metrics(y_test_inv, test_pred_inv)
-        
+            pred = model.predict(current_sequence.reshape(1, -1))[0]
+            forecast_scaled.append(pred)
+            current_sequence = np.append(current_sequence[1:], pred)
+
+        forecast = scaler.inverse_transform(
+            np.array(forecast_scaled).reshape(-1, 1)
+        ).flatten()
+
+        # Metrics on held-out test set
+        test_pred_scaled = model.predict(X_test)
+        test_pred = scaler.inverse_transform(test_pred_scaled.reshape(-1, 1))
+        y_test_actual = scaler.inverse_transform(y_test.reshape(-1, 1))
+        metrics = calculate_metrics(y_test_actual, test_pred)
+
         return {
             "forecast": [float(x) for x in forecast],
-            "metrics": metrics
+            "metrics": metrics,
         }
-    
+
     except Exception as e:
         logger.error(f"LSTM forecast error: {str(e)}")
         return None
